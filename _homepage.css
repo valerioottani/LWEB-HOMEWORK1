@@ -1,0 +1,208 @@
+/* ==========================================
+   1. RESET E IMPOSTAZIONI GENERALI
+   ========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Aiuta a gestire meglio le larghezze */
+}
+
+body {
+    background-color: #121212; /* Sfondo scuro tipico */
+    color: #ffffff;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden; /* Evita lo scroll orizzontale */
+}
+
+/* ==========================================
+   2. SIDEBAR (NAVIGAZIONE LATERALE)
+   ========================================== */
+#sidebar {
+    width: 240px;
+    height: 100%;
+    background-color: #000000;
+    position: fixed; /* Rimane fissa mentre scorri la pagina */
+    top: 0;
+    left: 0;
+    padding: 24px;
+}
+
+#sidebar .logo {
+    background-color: #000000;
+    display: block;
+    width: 100%;
+    padding-bottom: 20px;
+}
+
+#sidebar .logo img {
+    width: 130px; /* Regola in base alla tua immagine */
+    margin-bottom: 20px; 
+    background-color: transparent;
+    mix-blend-mode: screen;   
+}
+
+#sidebar ul {
+    list-style-type: none; /* Toglie i pallini della lista */
+}
+
+#sidebar ul li {
+    margin-bottom: 15px;
+}
+
+#sidebar ul li a {
+    color: #b3b3b3;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: bold;
+    transition: color 0.3s; /* Effetto morbido al passaggio del mouse */
+}
+
+#sidebar ul li a:hover {
+    color: #ffffff; /* Diventa bianco quando ci passi sopra */
+}
+
+/* ==========================================
+   3. AREA PRINCIPALE (MAIN CONTENT)
+   ========================================== */
+#main {
+    margin-left: 240px; /* Lascia lo spazio per la sidebar */
+    margin-bottom: 90px; /* Lascia lo spazio per il player in basso */
+    min-height: 100vh;
+}
+
+/* Header con sfumatura (Gradients funzionano bene in CSS moderni su XHTML) */
+#header {
+    padding: 150px 32px 60px 32px;
+    background-image: url('../img/primo_piano.png');
+    
+    /* AGGIUNGI QUESTE DUE RIGHE: */
+    background-repeat: no-repeat;  /* Evita che l'immagine si duplichi */
+    background-size: cover;       /* Forza l'immagine a coprire tutto lo spazio */
+    background-position: center;  /* Centra la foto */
+    
+    
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.7);    
+    position: relative;
+    min-height: 400px; /* Opzionale, per dare respiro alla foto */
+}
+
+ 
+
+#header p {
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #ffffff; /* Testo bianco */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Ombra per leggibilità */
+}
+
+#header h1 {
+    font-size: 72px;
+    margin: 10px 0;
+    font-weight: 900;
+    color: #ffffff; /* Titolo bianco */
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* Ombra per leggibilità */
+}
+
+#header .ascoltatori-mensili {
+    /* Questa lista di font cerca di caricare quelli più simili a Spotify */
+    font-family: "Montserrat", sans-serif;
+    position: absolute;
+    bottom: 10px; /* Distanza dal bordo inferiore della foto */
+    left: 32px;   /* Distanza dal bordo sinistro */
+    z-index: 2;
+    text-transform: none;
+    font-size: 16px; 
+    font-weight: 500; /* Non troppo grassetto */
+    color: #ffffff;
+    margin-top: 8px;
+    letter-spacing: -0.3px; /* Spotify stringe leggermente le lettere */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Seleziona l'immagine dell'album dentro la lista dei popolari */
+/* Stile per la lista ordinata */
+#Popolari ol {
+    padding-left: 40px; /* Spazio per i numeri della lista */
+    color: #b3b3b3;    /* Colore dei numeri */
+}
+
+#Popolari ol li {
+    display: list-item; /* Mantiene la numerazione automatica */
+    margin-bottom: 12px;
+    vertical-align: middle;
+}
+
+/* Grandezza e allineamento immagini album */
+#Popolari ol li img {
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;  /* Spazio tra numero e immagine */
+    margin-right: 15px; /* Spazio tra immagine e titolo */
+    vertical-align: middle; 
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+/* Stile dei link (titoli canzoni) */
+#Popolari ol li a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+#Popolari ol li a:hover {
+    text-decoration: underline;
+}
+
+
+
+/* Contenuto Biografia */
+.content {
+    padding: 20px 32px;
+}
+
+.content h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.content p {
+    color: #b3b3b3;
+    margin-bottom: 15px;
+    max-width: 800px; /* Migliora la leggibilità */
+}
+
+.content strong {
+    color: #ffffff;
+}
+
+/* ==========================================
+   4. PLAYER BAR (FISSA IN BASSO)
+   ========================================== */
+#player {
+    width: 100%;
+    height: 90px;
+    background-color: #181818;
+    border-top: 1px solid #282828;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    display: block; /* In XHTML i div sono block di default */
+    padding: 30px;
+    text-align: center;
+}
+
+#player p {
+    font-size: 14px;
+    color: #ffffff;
+}
+
+#player strong {
+    color: #1DB954; /* Verde Spotify per il titolo della canzone */
+}
