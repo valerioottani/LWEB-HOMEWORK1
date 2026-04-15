@@ -75,7 +75,7 @@ body {
 /* Header con sfumatura (Gradients funzionano bene in CSS moderni su XHTML) */
 #header {
     padding: 150px 32px 60px 32px;
-    background-image: url('../img/primo_piano.png');
+    background-image: url('/img/primo_piano.png');
     
     /* AGGIUNGI QUESTE DUE RIGHE: */
     background-repeat: no-repeat;  /* Evita che l'immagine si duplichi */
