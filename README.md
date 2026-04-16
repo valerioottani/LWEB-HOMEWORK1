@@ -3,7 +3,7 @@
 Questo progetto consiste nella realizzazione di una piattaforma web dedicata all'artista **Luchè**, progettata seguendo l'interfaccia utente e l'esperienza d'uso di **Spotify**. Il focus principale dell'elaborato è la corretta implementazione degli standard **XHTML 1.0 Strict** e la separazione dei contenuti dalla presentazione tramite **CSS**.
 
 
-## 🛠️ Architettura Tecnologica
+##  Architettura Tecnologica
 ### Struttura XHTML (Contenuto)
 Il sito è costruito utilizzando esclusivamente **XHTML 1.0 Strict**. Le caratteristiche principali includono:
 * **Dichiarazione XML**: Ogni file inizia con `<?xml version="1.0" encoding="UTF-8"?>`.
@@ -17,14 +17,14 @@ La veste grafica è gestita tramite fogli di stile modulari per garantire pulizi
 * **_artisti.css**: Crea il tipico effetto circolare per le foto degli artisti suggeriti.
 * **_eventi.css**: Stilizza la tabella dei concerti rendendola interattiva al passaggio del mouse.
 
-## 📂 Organizzazione del Sito
+## Organizzazione del Sito
 Il progetto è suddiviso nelle seguenti sezioni navigabili:
 1. **Home**: Biografia dettagliata e traccia in primo piano con header a tutta larghezza.
 2. **Discografia**: Elenco completo degli album (es. *Malammore*, *Potere*, *L1*) visualizzati tramite card interattive.
 3. **Eventi**: Tabella degli appuntamenti live con data, location e link per i biglietti.
 4. **Altri Artisti**: Suggerimenti di profili correlati (Geolier, Guè, Marracash) con avatar circolari.
 
-## 🎨 Componenti Visuali Avanzati
+## Componenti Visuali Avanzati
 * **Sidebar Fissa**: Menu laterale sempre visibile per una navigazione rapida.
 * **Effetti Hover**: Animazioni di zoom sulle immagini e transizioni di colore per migliorare l'interattività.
 * **Tipografia Spotify**: Utilizzo di font sans-serif (Segoe UI, Roboto, Helvetica) per un look moderno.
