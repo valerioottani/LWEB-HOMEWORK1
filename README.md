@@ -1,6 +1,9 @@
 # Link delle repository:
 - https://github.com/valerioottani/LWEB-HOMEWORK1.git
 - https://github.com/Giogiogabbana/LWEB-HOMEWORK1.git
+# Autori:
+- Ottani Valerio
+- La Penna Giovanni
 
 
 # LWEB-Homework 1: Fan Page Luchè (Spotify Style)
