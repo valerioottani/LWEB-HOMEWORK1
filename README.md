@@ -1,44 +1,33 @@
-🧑🏻‍💻 Autore:
-   Valerio Ottani
-    Giovanni La Penna
+# LWEB-Homework 1: Fan Page Luchè (Spotify Style)
 
-📘 Descrizione:
-Questo progetto sono pagine dedicate all'artista Luchè, sviluppata simulando l'interfaccia grafica di Spotify. Il sito è stato realizzato utilizzando XHTML 1.0 Strict per garantire una struttura semantica rigorosa e CSS3 per una presentazione moderna e accattivante.
+Questo progetto consiste nella realizzazione di una piattaforma web dedicata all'artista **Luchè**, progettata seguendo l'interfaccia utente e l'esperienza d'uso di **Spotify**. Il focus principale dell'elaborato è la corretta implementazione degli standard **XHTML 1.0 Strict** e la separazione dei contenuti dalla presentazione tramite **CSS**.
 
-L'obiettivo dell'homework è dimostrare la capacità di separare nettamente il contenuto dalla formattazione, rispettando gli standard internazionali del W3C. Il sito include sezioni dedicate alla biografia, alla discografia completa, agli eventi live e agli artisti correlati.
 
-📂 Struttura della cartella LWEB-Homework1
-    img/: cartella contenente le immagini dell'artista, delle copertine degli album e le icone social.
-    Validazione_W3C_Files/: cartelle o file PDF che attestano la validazione XHTML delle pagine.
-    homepage.html: introduzione e biografia dell'artista.
-    discografia.html: griglia degli album in stile "Spotify Tiles".
-    eventi.html: tabella riassuntiva dei concerti e tour.
-    artisti.html: sezione dedicata agli artisti suggeriti e collaboratori.
-    _homepage.css: file di stile specifico per la home.
-    _discografia.css: gestione del layout a griglia della discografia.
-    _eventi.css: stile della tabella e degli appuntamenti.
-    _artisti.css: stile per le card degli artisti correlati.
+## 🛠️ Architettura Tecnologica
+### Struttura XHTML (Contenuto)
+Il sito è costruito utilizzando esclusivamente **XHTML 1.0 Strict**. Le caratteristiche principali includono:
+* **Dichiarazione XML**: Ogni file inizia con `<?xml version="1.0" encoding="UTF-8"?>`.
+* **Sintassi Rigorosa**: Tutti i tag sono scritti in minuscolo e correttamente chiusi (es. `<img />`, `<br />`).
+* **Validazione**: Tutte le pagine hanno superato il controllo del **W3C Markup Validator**.
 
-🧱 Struttura XHTML
-Ogni pagina adotta rigorosamente:
-    DOCTYPE XHTML 1.0 Strict
-    Tag chiusi obbligatoriamente (es: <br />, <img />).
-    Attributi obbligatori come alt per le immagini e type per i fogli di stile.
-    Sintassi interamente in minuscolo.
+### Design e CSS (Presentazione)
+La veste grafica è gestita tramite fogli di stile modulari per garantire pulizia e manutenibilità:
+* **_homepage.css**: Gestisce il layout principale, la sidebar fissa e il player inferiore.
+* **_discografia.css**: Implementa una griglia fluida per le copertine degli album.
+* **_artisti.css**: Crea il tipico effetto circolare per le foto degli artisti suggeriti.
+* **_eventi.css**: Stilizza la tabella dei concerti rendendola interattiva al passaggio del mouse.
 
-Elementi XHTML utilizzati:
-    <div>: per la gestione dei contenitori logici (sidebar, player, main content).
-    <table>, <tr>, <td>: utilizzati nella pagina eventi per la visualizzazione dei dati.
-    <ul>, <li>: per il menu di navigazione laterale.
-    <h1>, <h2>, <p>: per la gerarchia dei testi e la biografia.
-    <img>: per le cover degli album e i loghi.
+## 📂 Organizzazione del Sito
+Il progetto è suddiviso nelle seguenti sezioni navigabili:
+1. **Home**: Biografia dettagliata e traccia in primo piano con header a tutta larghezza.
+2. **Discografia**: Elenco completo degli album (es. *Malammore*, *Potere*, *L1*) visualizzati tramite card interattive.
+3. **Eventi**: Tabella degli appuntamenti live con data, location e link per i biglietti.
+4. **Altri Artisti**: Suggerimenti di profili correlati (Geolier, Guè, Marracash) con avatar circolari.
 
-🎨 Componenti CSS utilizzati:
-    Layout Flexbox: utilizzato per creare la struttura a colonne (sidebar a sinistra e contenuto a destra) e la griglia fluida della discografia.
-    Posizionamento Fisso: applicato alla sidebar laterale e al player musicale inferiore per simulare l'app di Spotify.
-    Effetti Hover: animazioni sulle card degli album (transform: scale) e sui link di navigazione.
-    Design Responsive: utilizzo di unità di misura relative e media query per garantire la leggibilità su diversi schermi.
-    Stilizzazione Tabelle: bordi arrotondati, contrasti cromatici (nero/verde Spotify) e padding ottimizzati.
+## 🎨 Componenti Visuali Avanzati
+* **Sidebar Fissa**: Menu laterale sempre visibile per una navigazione rapida.
+* **Effetti Hover**: Animazioni di zoom sulle immagini e transizioni di colore per migliorare l'interattività.
+* **Tipografia Spotify**: Utilizzo di font sans-serif (Segoe UI, Roboto, Helvetica) per un look moderno.
 
-✅ Validazione
-Tutti i file XHTML presenti nel progetto sono stati verificati tramite il W3C Markup Validator e risultano conformi allo standard XHTML 1.0 Strict.
+---
+*Progetto realizzato per l'esame di Linguaggi per il Web - Homework 1.*
