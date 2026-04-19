@@ -8,7 +8,7 @@
 
 # LWEB-Homework 1: Fan Page Luchè (Spotify Style)
 
-Questo progetto consiste nella realizzazione di una piattaforma web dedicata all'artista **Luchè**, progettata seguendo l'interfaccia utente e l'esperienza d'uso di **Spotify**. Il focus principale dell'elaborato è la corretta implementazione degli standard **XHTML 1.0 Strict** e la separazione dei contenuti dalla presentazione tramite **CSS**.
+Questo homework consiste nella realizzazione di una piattaforma web dedicata all'artista **Luchè**, progettata seguendo l'interfaccia utente e l'esperienza d'uso di **Spotify**. Il focus principale dell'elaborato è la corretta implementazione degli standard **XHTML 1.0 Strict** e la separazione dei contenuti dalla presentazione tramite **CSS**.
 
 
 ##  Architettura Tecnologica
@@ -26,7 +26,7 @@ La veste grafica è gestita tramite fogli di stile modulari per garantire pulizi
 * **_eventi.css**: Stilizza la tabella dei concerti rendendola interattiva al passaggio del mouse.
 
 ## Organizzazione del Sito
-Il progetto è suddiviso nelle seguenti sezioni navigabili:
+l'Homework è suddiviso nelle seguenti sezioni navigabili:
 1. **Home**: Biografia dettagliata e traccia in primo piano con header a tutta larghezza.
 2. **Discografia**: Elenco completo degli album (es. *Malammore*, *Potere*, *L1*) visualizzati tramite card interattive.
 3. **Eventi**: Tabella degli appuntamenti live con data, location e link per i biglietti.
@@ -37,4 +37,4 @@ Il progetto è suddiviso nelle seguenti sezioni navigabili:
 * **Effetti Hover**: Animazioni di zoom sulle immagini e transizioni di colore per migliorare l'interattività.
 
 ---
-*Progetto realizzato per l'esame di Linguaggi per il Web - Homework 1.*
+*Homework realizzato per l'esame di Linguaggi per il Web - Homework 1.*
