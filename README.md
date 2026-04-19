@@ -2,7 +2,7 @@
 - https://github.com/valerioottani/LWEB-HOMEWORK1.git
 - https://github.com/Giogiogabbana/LWEB-HOMEWORK1.git
 # Autori:
-- Ottani Valerio
+- Ottani Valerio (nickname: valerioottani)
 - La Penna Giovanni
 
 
