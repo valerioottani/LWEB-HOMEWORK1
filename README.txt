@@ -1,9 +1,6 @@
 # Link delle repository:
 - https://github.com/valerioottani/LWEB-HOMEWORK1.git
 - https://github.com/Giogiogabbana/LWEB-HOMEWORK1.git
-# Autori:
-- Ottani Valerio (nickname: valerioottani)
-- La Penna Giovanni (nickname: Giogiogabbana)
 
 
 # LWEB-Homework 1: Fan Page Luchè (Spotify Style)
@@ -26,7 +23,7 @@ La veste grafica è gestita tramite fogli di stile modulari per garantire pulizi
 * **_eventi.css**: Stilizza la tabella dei concerti rendendola interattiva al passaggio del mouse.
 
 ## Organizzazione del Sito
-l'Homework è suddiviso nelle seguenti sezioni navigabili:
+Il progetto è suddiviso nelle seguenti sezioni navigabili:
 1. **Home**: Biografia dettagliata e traccia in primo piano con header a tutta larghezza.
 2. **Discografia**: Elenco completo degli album (es. *Malammore*, *Potere*, *L1*) visualizzati tramite card interattive.
 3. **Eventi**: Tabella degli appuntamenti live con data, location e link per i biglietti.
@@ -35,6 +32,7 @@ l'Homework è suddiviso nelle seguenti sezioni navigabili:
 ## Componenti Visuali Avanzati
 * **Sidebar Fissa**: Menu laterale sempre visibile per una navigazione rapida.
 * **Effetti Hover**: Animazioni di zoom sulle immagini e transizioni di colore per migliorare l'interattività.
+* **Tipografia Spotify**: Utilizzo di font sans-serif (Segoe UI, Roboto, Helvetica) per un look moderno.
 
 ---
-*Homework realizzato per l'esame di Linguaggi per il Web - Homework 1.*
+*Progetto realizzato per l'esame di Linguaggi per il Web - Homework 1.*
