@@ -23,7 +23,7 @@ La veste grafica è gestita tramite fogli di stile modulari per garantire pulizi
 * **_eventi.css**: Stilizza la tabella dei concerti rendendola interattiva al passaggio del mouse.
 
 ## Organizzazione del Sito
-Il progetto è suddiviso nelle seguenti sezioni navigabili:
+L'homework è suddiviso nelle seguenti sezioni navigabili:
 1. **Home**: Biografia dettagliata e traccia in primo piano con header a tutta larghezza.
 2. **Discografia**: Elenco completo degli album (es. *Malammore*, *Potere*, *L1*) visualizzati tramite card interattive.
 3. **Eventi**: Tabella degli appuntamenti live con data, location e link per i biglietti.
@@ -35,4 +35,4 @@ Il progetto è suddiviso nelle seguenti sezioni navigabili:
 * **Tipografia Spotify**: Utilizzo di font sans-serif (Segoe UI, Roboto, Helvetica) per un look moderno.
 
 ---
-*Progetto realizzato per l'esame di Linguaggi per il Web - Homework 1.*
+*Homework realizzato per l'esame di Linguaggi per il Web - Homework 1.*
