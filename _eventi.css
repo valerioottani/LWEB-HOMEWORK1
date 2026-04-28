@@ -28,10 +28,12 @@
     transition: background-color 0.3s;
     border-radius: 8px;
     margin-bottom: 5px;
+    cursor: default; /* Forza cursore a freccia */
+    pointer-events: none; /* Disabilita ogni interazione con il mouse sulla riga */
 }
 
 .event-row:hover {
-    background-color: #282828;
+    background-color: transparent;
 }
 
 
@@ -91,4 +93,15 @@
 #sidebar ul li a.active {
     color: #1DB954 !important;
     font-weight: bold !important;
+}
+
+.btn-tickets-static {
+    border: 1px solid #404040; /* Grigio più scuro per sembrare disabilitato */
+    color: #b3b3b3; /* Colore meno acceso */
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: default;
+    display: inline-block;
 }

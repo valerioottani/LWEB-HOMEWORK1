@@ -24,7 +24,8 @@
     width: 190px;
     border-radius: 8px;
     transition: background-color 0.3s;
-    cursor: pointer;
+    cursor: default; /* Forza il cursore a essere una freccia standard */
+    pointer-events: none; /* Disabilita completamente l'interazione del mouse con la card */
 }
 
 .album-card:hover {
@@ -60,4 +61,10 @@
 #sidebar ul li a.active {
     color: #1DB954 !important;
     font-weight: bold !important;
+}
+
+.nome-album {
+    font-size: 16px;
+    color: #ffffff;
+    cursor: default;
 }
