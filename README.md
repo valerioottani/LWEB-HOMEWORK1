@@ -30,7 +30,7 @@ l'Homework è suddiviso nelle seguenti sezioni navigabili:
 1. **Home**: Biografia dettagliata e traccia in primo piano con header a tutta larghezza.
 2. **Discografia**: Elenco completo degli album (es. *Malammore*, *Potere*, *L1*) visualizzati tramite card interattive.
 3. **Eventi**: Tabella degli appuntamenti live con data, location e link per i biglietti.
-4. **Altri Artisti**: Suggerimenti di profili correlati (Geolier, Guè, Marracash) con avatar circolari.
+4. **Altri Artisti**: Suggerimenti di profili correlati (Geolier, Guè, Marracash) con avatar circolari e homepage accessibili con i relativi link.
 
 ## Componenti Visuali Avanzati
 * **Sidebar Fissa**: Menu laterale sempre visibile per una navigazione rapida.

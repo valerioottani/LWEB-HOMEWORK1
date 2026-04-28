@@ -19,7 +19,7 @@ Il sito è costruito utilizzando esclusivamente **XHTML 1.0 Strict**. Le caratte
 La veste grafica è gestita tramite fogli di stile modulari per garantire pulizia e manutenibilità:
 * **_homepage.css**: Gestisce il layout principale, la sidebar fissa e il player inferiore.
 * **_discografia.css**: Implementa una griglia fluida per le copertine degli album.
-* **_artisti.css**: Crea il tipico effetto circolare per le foto degli artisti suggeriti.
+* **_artisti.css**: Crea il tipico effetto circolare per le foto degli artisti suggeriti. 
 * **_eventi.css**: Stilizza la tabella dei concerti rendendola interattiva al passaggio del mouse.
 
 ## Organizzazione del Sito
@@ -27,7 +27,7 @@ L'homework è suddiviso nelle seguenti sezioni navigabili:
 1. **Home**: Biografia dettagliata e traccia in primo piano con header a tutta larghezza.
 2. **Discografia**: Elenco completo degli album (es. *Malammore*, *Potere*, *L1*) visualizzati tramite card interattive.
 3. **Eventi**: Tabella degli appuntamenti live con data, location e link per i biglietti.
-4. **Altri Artisti**: Suggerimenti di profili correlati (Geolier, Guè, Marracash) con avatar circolari.
+4. **Altri Artisti**: Suggerimenti di profili correlati (Geolier, Guè, Marracash) con avatar circolari e homepage accessibili con i relativi link.
 
 ## Componenti Visuali Avanzati
 * **Sidebar Fissa**: Menu laterale sempre visibile per una navigazione rapida.
