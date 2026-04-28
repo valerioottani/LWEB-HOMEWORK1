@@ -74,12 +74,12 @@ body {
 
 #header {
     padding: 150px 32px 60px 32px;
-    background-image: url('img/sfera_sfondo.png');
+    background-image: url('img/geolier_sfondo.png');
     
    
     background-repeat: no-repeat;
     background-size: cover;       
-    background-position: center;  
+    background-position: center 120%;  
     background-attachment:fixed;
     
     
@@ -165,7 +165,7 @@ body {
     font-size: 14px;
     font-weight: 500;
     vertical-align: middle;
-}
+}   
 
 
 

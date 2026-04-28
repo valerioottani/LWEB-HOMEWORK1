@@ -28,9 +28,15 @@ La veste grafica è gestita tramite fogli di stile modulari per garantire pulizi
 ## Organizzazione del Sito
 l'Homework è suddiviso nelle seguenti sezioni navigabili:
 1. **Home**: Biografia dettagliata e traccia in primo piano con header a tutta larghezza.
+
+**ULTIMA MODIFICA**
+
+**"Abbiamo ottimizzato la sezione dedicata ai brani rimuovendo la navigazione non desiderata. Inizialmente, il titolo del brano risultava cliccabile a causa di un link predefinito nel codice. Per risolvere il problema, abbiamo eliminato il tag di collegamento e assegnato alla classe .nome-brano uno stile statico nel file CSS, garantendo che il titolo rimanga puramente informativo e non interattivo."**
+
+
 2. **Discografia**: Elenco completo degli album (es. *Malammore*, *Potere*, *L1*) visualizzati tramite card interattive.
 3. **Eventi**: Tabella degli appuntamenti live con data, location e link per i biglietti.
-4. **Altri Artisti**: Suggerimenti di profili correlati (Geolier, Guè, Marracash) con avatar circolari e homepage accessibili con i relativi link.
+4. **Altri Artisti**: Suggerimenti di profili correlati (Geolier, Guè, Marracash ecc..) con avatar circolari e homepage accessibili con i relativi link.
 
 ## Componenti Visuali Avanzati
 * **Sidebar Fissa**: Menu laterale sempre visibile per una navigazione rapida.

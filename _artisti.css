@@ -111,3 +111,16 @@
 .artista-card:hover img {
     transform: scale(1.06);
 }
+
+/* Rimuove lo stile predefinito del link e lo rende un blocco */
+.card-link {
+    text-decoration: none;
+    color: inherit; /* Mantiene il colore del testo originale (bianco) */
+    display: block; /* Fa in modo che il link copra l'intera area della card */
+}
+
+/* Assicurati che l'immagine all'interno del link non venga alterata */
+.card-link img {
+    display: block;
+    margin: 0 auto 12px auto; /* Centra l'immagine */
+}

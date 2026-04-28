@@ -157,9 +157,15 @@ body {
 
 #Popolari ol li a:hover {
     text-decoration: underline;
+    cursor: default !important;
 }
 
-
+#Popolari ol li .nome-brano {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    vertical-align: middle;
+}
 
 
 .content {
