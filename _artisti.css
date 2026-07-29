@@ -1,0 +1,126 @@
+
+.artisti-header {
+    padding: 60px 32px 20px 32px;
+}
+
+.artisti-header h1 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* Griglia degli Artisti */
+.artisti-grid {
+    padding: 0 32px;
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 24px;       
+}
+
+/* Card dell'Artista */
+.artista-card {
+    background-color: #181818;
+    padding: 20px;
+    width: 180px;
+    border-radius: 8px;
+    text-align: center; 
+    transition: background-color 0.3s ease;
+    cursor: pointer; /* pointer è il valore che trasforma il cursore nella classica "manina"
+     (che solitamente indica un link o un elemento cliccabile). */
+}
+
+.artista-card:hover {
+    background-color: #282828; 
+}
+
+
+.artista-card img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%; 
+    object-fit: cover;   
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5); 
+    transition: transform 0.3s ease;
+}
+
+.artista-card:hover img {
+    transform: scale(1.04); /
+}
+
+
+.artista-card h3 {
+    font-size: 16px;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.artista-card p {
+    font-size: 14px;
+    color: #b3b3b3; 
+    margin: 0;
+}
+
+
+
+
+#sidebar ul li a.active {
+    color: #1DB954 !important;
+    font-weight: bold !important;
+}
+
+
+#sidebar ul li a:hover {
+    color: #ffffff;
+}
+
+.artisti-grid {
+    padding: 0 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;  
+}
+
+.artista-card img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 12px;
+    transition: transform 0.3s ease;
+}
+
+.artista-card:hover img {
+    transform: scale(1.05); 
+}   
+
+
+.artista-card img {
+    width: 150px;           
+    height: 150px;     
+    border-radius: 50%;     
+    object-fit: cover;      
+    margin-bottom: 15px;
+    box-shadow: 0 8px 24px #00000080; 
+    transition: transform 0.3s ease; 
+}
+
+.artista-card:hover img {
+    transform: scale(1.06);
+}
+
+/* Rimuove lo stile predefinito del link e lo rende un blocco */
+.card-link {
+    text-decoration: none;
+    color: inherit; /* Mantiene il colore del testo originale (bianco) */
+    display: block; /* Fa in modo che il link copra l'intera area della card */
+}
+
+/* Assicurati che l'immagine all'interno del link non venga alterata */
+.card-link img {
+    display: block;
+    margin: 0 auto 12px auto; /* Centra l'immagine */
+}
