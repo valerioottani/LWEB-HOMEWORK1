@@ -1,155 +1,132 @@
 <?php
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 require_once 'connection.php';
 
-$messaggio = "";
+$is_admin = (isset($_SESSION['ruolo']) && $_SESSION['ruolo'] === 'admin');
 
-// 1. GESTIONE RIMOZIONE EVENTO (Solo se Admin)
-if (isset($_SESSION['admin']) && $_SESSION['admin'] === true && $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['rimuovi_evento'])) {
-    $id_evento = intval($_POST['id_evento_rimuovi']);
-    
-    // Ipotizzando che la tabella si chiami 'eventi' o tramite costante se definita
-    $tabella_eventi = defined('TAB_EVENTS') ? TAB_EVENTS : 'eventi';
-    $sql_delete = "DELETE FROM $tabella_eventi WHERE id = $id_evento";
-    
-    if ($conn->query($sql_delete) === TRUE) {
-        $messaggio = "<div style='background-color: #e11d48; color: white; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;'>🔴 Evento rimosso con successo!</div>";
-    } else {
-        $messaggio = "<div style='background-color: #e11d48; color: white; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;'>❌ Errore durante la rimozione: " . $conn->error . "</div>";
+// Gestione eliminazione evento (lato admin)
+if ($is_admin && isset($_GET['del_evento'])) {
+    $id_del = (int)$_GET['del_evento'];
+    $stmt_del = $conn->prepare("DELETE FROM `" . TAB_EVENTS . "` WHERE id = ?");
+    $stmt_del->bind_param('i', $id_del);
+    $stmt_del->execute();
+    $stmt_del->close();
+    header('Location: eventi.php');
+    exit();
+}
+
+// Gestione inserimento nuovo evento (lato admin)
+if ($is_admin && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aggiungi_evento'])) {
+    $giorno = (int)$_POST['giorno'];
+    $mese = trim($_POST['mese']);
+    $titolo = trim($_POST['titolo']);
+    $luogo = trim($_POST['luogo']);
+
+    if (!empty($titolo) && !empty($mese) && $giorno > 0) {
+        $stmt_ins = $conn->prepare("INSERT INTO `" . TAB_EVENTS . "` (giorno, mese, titolo, luogo, link_biglietti) VALUES (?, ?, ?, ?, '#')");
+        $stmt_ins->bind_param('isss', $giorno, $mese, $titolo, $luogo);
+        $stmt_ins->execute();
+        $stmt_ins->close();
+        header('Location: eventi.php');
+        exit();
     }
 }
 
-// 2. GESTIONE INSERIMENTO NUOVO EVENTO (Solo se Admin)
-if (isset($_SESSION['admin']) && $_SESSION['admin'] === true && $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['aggiungi_evento'])) {
-    $titolo = $conn->real_escape_string(trim($_POST['titolo_evento']));
-    $data_evento = $conn->real_escape_string(trim($_POST['data_evento']));
-    $luogo = $conn->real_escape_string(trim($_POST['luogo_evento']));
-
-    if (!empty($titolo) && !empty($data_evento)) {
-        $tabella_eventi = defined('TAB_EVENTS') ? TAB_EVENTS : 'eventi';
-        $sql_insert = "INSERT INTO $tabella_eventi (titolo, data, luogo) VALUES ('$titolo', '$data_evento', '$luogo')";
-        
-        if ($conn->query($sql_insert) === TRUE) {
-            $messaggio = "<div style='background-color: #1db954; color: black; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;'>🟢 Evento aggiunto con successo!</div>";
-        } else {
-            $messaggio = "<div style='background-color: #e11d48; color: white; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;'>❌ Errore: " . $conn->error . "</div>";
-        }
-    }
-}
-
-// 3. RECUPERO EVENTI DAL DB
-$tabella_eventi = defined('TAB_EVENTS') ? TAB_EVENTS : 'eventi';
-$query = "SELECT * FROM $tabella_eventi ORDER BY data ASC";
-$risultato = $conn->query($query);
-
-echo '<?xml version="1.0" encoding="UTF-8"?>';
+$res = $conn->query("SELECT * FROM `" . TAB_EVENTS . "` ORDER BY id ASC");
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Eventi e Concerti - Spotify Style</title>
-    <link rel="stylesheet" type="text/css" href="_homepage.css" />
-    
+    <title>Eventi Live - Spotify</title>
     <style type="text/css">
-        /* 🟢 FORZA IL LINK "EVENTI" DELLA SIDEBAR A DIVENTARE VERDE 🟢 */
-        #menu-eventi,
-        .sidebar a[href="eventi.php"],
-        #sidebar a[href="eventi.php"],
-        #nav a[href="eventi.php"],
-        ul li a[href="eventi.php"] {
-            color: #1db954 !important;
-            font-weight: bold !important;
+        .event-row {
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .event-row:hover {
+            background-color: #242424 !important;
         }
     </style>
 </head>
-<body style="background-color: #121212; color: white; margin: 0; font-family: sans-serif;">
+<body style="background-color: #121212; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
 
     <?php include 'menu.php'; ?>
 
-    <div id="main" style="padding: 20px; margin-left: 240px; padding-bottom: 60px;">
+    <div style="margin-left: 230px; padding: 40px; display: flex; flex-direction: column; align-items: center;">
         
-        <div style="margin-bottom: 30px;">
-            <h1 style="color: white; font-size: 28px; font-weight: bold;">Prossimi Eventi</h1>
-            <p style="color: #b3b3b3; font-size: 14px;">Non perderti i concerti live dei tuoi artisti preferiti.</p>
+        <div style="width: 100%; max-width: 900px; text-align: left; margin-bottom: 24px;">
+            <h1 style="font-size: 32px; font-weight: 900; margin: 0 0 8px 0; letter-spacing: -1px;">Eventi dal Vivo & Tour</h1>
+            <p style="color: #b3b3b3; font-size: 14px; margin: 0;">Calendario dei prossimi concerti e live show degli artisti.</p>
         </div>
 
-        <?php echo $messaggio; ?>
-
-        <div style="background-color: #181818; padding: 20px; border-radius: 8px; max-width: 800px;">
-            <?php if ($risultato && $risultato->num_rows > 0): ?>
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid #282828; color: #b3b3b3; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
-                            <th style="padding: 12px;">Data</th>
-                            <th style="padding: 12px;">Evento / Tour</th>
-                            <th style="padding: 12px;">Luogo</th>
-                            <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] === true): ?>
-                                <th style="padding: 12px; text-align: right;">Azione</th>
-                            <?php endif; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($row = $risultato->fetch_assoc()): ?>
-                            <tr style="border-bottom: 1px solid #282828; font-size: 14px; color: #e5e5e5;" onmouseover="this.style.backgroundColor='#282828'" onmouseout="this.style.backgroundColor='transparent'">
-                                <td style="padding: 16px; font-weight: bold; color: #1db954;">
-                                    <?php echo date('d/m/Y', strtotime($row['data'])); ?>
-                                </td>
-                                <td style="padding: 16px; font-weight: bold; color: white;">
-                                    <?php echo htmlspecialchars($row['titolo']); ?>
-                                </td>
-                                <td style="padding: 16px; color: #b3b3b3;">
-                                    <?php echo htmlspecialchars($row['luogo']); ?>
-                                </td>
-                                <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] === true): ?>
-                                    <td style="padding: 16px; text-align: right;">
-                                        <form action="eventi.php" method="POST" style="margin: 0;" onsubmit="return confirm('Vuoi eliminare questo evento?');">
-                                            <input type="hidden" name="id_evento_rimuovi" value="<?php echo $row['id']; ?>" />
-                                            <button type="submit" name="rimuovi_evento" style="background-color: #e11d48; color: white; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-weight: bold; font-size: 12px;">
-                                                Elimina
-                                            </button>
-                                        </form>
-                                    </td>
-                                <?php endif; ?>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <p style="color: #b3b3b3; margin: 0; padding: 10px 0;">Al momento non ci sono concerti o eventi in programma.</p>
-            <?php endif; ?>
-        </div>
-
-        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] === true): ?>
-            <div style="margin-top: 40px; padding: 25px; border: 1px solid #1db954; background-color: #181818; border-radius: 8px; max-width: 600px; box-sizing: border-box;">
-                <h3 style="color: #1db954; margin-top: 0; font-size: 18px; margin-bottom: 20px;">Pannello Admin: Aggiungi Nuovo Evento</h3>
-                
-                <form action="eventi.php" method="POST">
-                    <div style="margin-bottom: 15px;">
-                        <label for="titolo_evento" style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Nome Evento / Tour:</label>
-                        <input type="text" id="titolo_evento" name="titolo_evento" required="required" placeholder="Es. Geolier Live 2026" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
+        <!-- Pannello Aggiunta Evento (Visibile solo ad Admin) -->
+        <?php if ($is_admin): ?>
+            <div style="background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 20px; margin-bottom: 24px; width: 100%; max-width: 900px; box-sizing: border-box;">
+                <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 14px 0; color: #1db954;">+ Aggiungi Nuovo Concerto (Admin)</h3>
+                <form action="eventi.php" method="post" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Giorno:</label>
+                        <input type="number" name="giorno" min="1" max="31" value="15" required style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px; width: 70px;" />
                     </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label for="data_evento" style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Data Concerto:</label>
-                        <input type="date" id="data_evento" name="data_evento" required="required" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Mese (es: LUG):</label>
+                        <input type="text" name="mese" maxlength="3" value="LUG" required style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px; width: 80px;" />
                     </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label for="luogo_evento" style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Luogo / Stadio / Città:</label>
-                        <input type="text" id="luogo_evento" name="luogo_evento" required="required" placeholder="Es. Stadio Maradona, Napoli" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Titolo Tour / Evento:</label>
+                        <input type="text" name="titolo" required style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px; width: 220px;" />
                     </div>
-
-                    <button type="submit" name="aggiungi_evento" style="background-color: #1db954; color: black; border: none; padding: 12px 24px; border-radius: 25px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
-                        Inserisci Evento nel DB
-                    </button>
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Location / Città:</label>
+                        <input type="text" name="luogo" required style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px; width: 200px;" />
+                    </div>
+                    <div>
+                        <input type="submit" name="aggiungi_evento" value="Salva Concerto" style="background-color: #1db954; color: #000000; border: none; padding: 9px 20px; border-radius: 500px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase;" />
+                    </div>
                 </form>
             </div>
         <?php endif; ?>
+
+        <div style="background-color: #181818; border-radius: 8px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); width: 100%; max-width: 900px; box-sizing: border-box;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #282828; color: #b3b3b3; font-size: 12px; text-transform: uppercase;">
+                        <th style="padding: 14px 16px; width: 18%;">Data</th>
+                        <th style="padding: 14px 16px; width: 42%;">Tour / Evento</th>
+                        <th style="padding: 14px 16px; width: 28%;">Location</th>
+                        <?php if ($is_admin): ?>
+                            <th style="padding: 14px 16px; text-align: right; width: 12%;">Azione</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($ev = $res->fetch_assoc()): ?>
+                        <tr class="event-row" style="border-bottom: 1px solid #222222; font-size: 14px;">
+                            <td style="padding: 16px;">
+                                <div style="display: flex; align-items: baseline; gap: 6px;">
+                                    <span style="font-size: 20px; font-weight: 900; color: #1db954;"><?php echo htmlspecialchars($ev['giorno']); ?></span>
+                                    <span style="font-size: 12px; font-weight: bold; color: #ffffff; text-transform: uppercase;"><?php echo htmlspecialchars($ev['mese']); ?></span>
+                                </div>
+                            </td>
+                            <td style="padding: 16px; font-weight: bold; color: #ffffff;">
+                                <?php echo htmlspecialchars($ev['titolo']); ?>
+                            </td>
+                            <td style="padding: 16px; color: #b3b3b3; font-size: 13px;">
+                                <?php echo htmlspecialchars($ev['luogo']); ?>
+                            </td>
+                            <?php if ($is_admin): ?>
+                                <td style="padding: 16px; text-align: right;">
+                                    <a href="eventi.php?del_evento=<?php echo $ev['id']; ?>" onclick="return confirm('Eliminare questo evento?');" style="color: #e22134; font-size: 11px; font-weight: bold; text-decoration: none;">Elimina</a>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
 
     </div>
 
 </body>
 </html>
+<?php $conn->close(); ?>

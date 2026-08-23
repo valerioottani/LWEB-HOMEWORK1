@@ -1,160 +1,185 @@
 <?php
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 require_once 'connection.php';
 
-$messaggio = "";
+$id_artista = isset($_GET['id']) ? (int)$_GET['id'] : 1;
+$is_admin = (isset($_SESSION['ruolo']) && $_SESSION['ruolo'] === 'admin');
 
-// 1. GESTIONE RIMOZIONE ALBUM DALLA PAGINA ARTISTA (Solo se Admin)
-if (isset($_SESSION['admin']) && $_SESSION['admin'] === true && $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['rimuovi_album'])) {
-    $id_album_da_rimuovere = intval($_POST['id_album_rimuovi']);
-    $current_artista_id = intval($_POST['artista_id']);
+// Gestione eliminazione brano (lato admin)
+if ($is_admin && isset($_GET['del_brano'])) {
+    $id_brano = (int)$_GET['del_brano'];
+    $stmt_del = $conn->prepare("DELETE FROM `" . TAB_TRACKS . "` WHERE id = ?");
+    $stmt_del->bind_param('i', $id_brano);
+    $stmt_del->execute();
+    $stmt_del->close();
+    header("Location: artista.php?id=$id_artista");
+    exit();
+}
 
-    $sql_delete = "DELETE FROM " . TAB_ALBUMS . " WHERE id = $id_album_da_rimuovere AND artista_id = $current_artista_id";
-    if ($conn->query($sql_delete) === TRUE) {
-        $messaggio = "<div style='background-color: #e11d48; color: white; padding: 12px; border-radius: 4px; margin: 20px 32px 0 32px; font-weight: bold;'>🔴 Album rimosso con successo dal database!</div>";
+// Gestione inserimento nuovo brano (lato admin)
+if ($is_admin && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aggiungi_brano'])) {
+    $titolo_brano = trim($_POST['titolo']);
+    $durata = trim($_POST['durata']);
+    $immagine_brano = trim($_POST['immagine_brano']);
+    
+    // Trova o crea un album di default per l'artista
+    $res_alb = $conn->query("SELECT id FROM `" . TAB_ALBUMS . "` WHERE artista_id = $id_artista LIMIT 1");
+    if ($res_alb && $row_a = $res_alb->fetch_assoc()) {
+        $album_id = $row_a['id'];
     } else {
-        $messaggio = "<div style='background-color: #e11d48; color: white; padding: 12px; border-radius: 4px; margin: 20px 32px 0 32px; font-weight: bold;'>❌ Errore durante la rimozione: " . $conn->error . "</div>";
+        $conn->query("INSERT INTO `" . TAB_ALBUMS . "` (artista_id, titolo, anno, copertina) VALUES ($id_artista, 'Raccolta Ufficiale', 2026, 'album.png')");
+        $album_id = $conn->insert_id;
+    }
+
+    if (!empty($titolo_brano)) {
+        if (empty($durata)) { $durata = '3:00'; }
+        if (empty($immagine_brano)) { $immagine_brano = 'album.png'; }
+        
+        $stmt_t = $conn->prepare("INSERT INTO `" . TAB_TRACKS . "` (album_id, titolo, durata, immagine_brano) VALUES (?, ?, ?, ?)");
+        $stmt_t->bind_param('isss', $album_id, $titolo_brano, $durata, $immagine_brano);
+        $stmt_t->execute();
+        $stmt_t->close();
+        header("Location: artista.php?id=$id_artista");
+        exit();
     }
 }
 
-// 2. Recuperiamo l'ID dell'artista dall'URL (se non c'è, impostiamo 1)
-$artista_id = isset($_GET['id']) ? intval($_GET['id']) : 1;
+// Recupero dati artista
+$stmt = $conn->prepare("SELECT * FROM `" . TAB_ARTISTS . "` WHERE id = ?");
+$stmt->bind_param('i', $id_artista);
+$stmt->execute();
+$res_artista = $stmt->get_result();
 
-// 3. Query per recuperare i dati dell'artista corrente
-$query_artista = "SELECT * FROM " . TAB_ARTISTS . " WHERE id = $artista_id";
-$risultato_artista = $conn->query($query_artista);
-
-if ($risultato_artista && $risultato_artista->num_rows > 0) {
-    $artista = $risultato_artista->fetch_assoc();
-} else {
-    die("Artista non trovato nel database!");
+if ($res_artista->num_rows === 0) {
+    header('Location: artisti.php');
+    exit();
 }
+$artista = $res_artista->fetch_assoc();
+$stmt->close();
 
-// 4. GESTIONE DELL'INSERIMENTO DI UN NUOVO BRANO/ALBUM (Solo se Admin)
-if (isset($_SESSION['admin']) && $_SESSION['admin'] === true && $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['aggiungi_album'])) {
-    $titolo_album = $conn->real_escape_string(trim($_POST['titolo_album']));
-    $anno_album = intval($_POST['anno_album']);
-    $copertina_album = $conn->real_escape_string(trim($_POST['copertina_album']));
-    $current_artista_id = intval($_POST['artista_id']); 
+// Recupero brani
+$sql_brani = "SELECT t.id AS track_id, t.titolo, t.durata, t.immagine_brano, a.titolo AS album_nome 
+              FROM `" . TAB_TRACKS . "` t 
+              JOIN `" . TAB_ALBUMS . "` a ON t.album_id = a.id 
+              WHERE a.artista_id = ? 
+              ORDER BY t.id ASC";
 
-    if (empty($copertina_album)) {
-        $copertina_album = "album.png";
-    }
-
-    if (!empty($titolo_album)) {
-        $sql_insert_album = "INSERT INTO " . TAB_ALBUMS . " (artista_id, titolo, anno, copertina) 
-                             VALUES ($current_artista_id, '$titolo_album', $anno_album, '$copertina_album')";
-        if ($conn->query($sql_insert_album) === TRUE) {
-            header("Location: artista.php?id=" . $current_artista_id);
-            exit;
-        }
-    }
-}
-
-// 5. Query per recuperare gli album di questo specifico artista
-$query_album = "SELECT * FROM " . TAB_ALBUMS . " WHERE artista_id = $artista_id ORDER BY anno DESC";
-$risultato_album = $conn->query($query_album);
-
-echo '<?xml version="1.0" encoding="UTF-8"?>';
+$stmt_b = $conn->prepare($sql_brani);
+$stmt_b->bind_param('i', $id_artista);
+$stmt_b->execute();
+$res_brani = $stmt_b->get_result();
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title><?php echo htmlspecialchars($artista['nome']); ?> - Spotify Style</title>
-    <link rel="stylesheet" type="text/css" href="artista_dettaglio.css" />
-    <link rel="stylesheet" type="text/css" href="_artisti.css" />
-    
+    <title><?php echo htmlspecialchars($artista['nome']); ?> - Spotify</title>
     <style type="text/css">
-        /* Sfondo dinamico personalizzato per l'header dell'artista se presente nel DB */
-        #header {
-            <?php 
-            $foto_header = !empty($artista['immagine']) ? str_replace('img/', '', $artista['immagine']) : 'primo_piano.png';
-            if (file_exists("img/" . $foto_header)): 
-            ?>
-            background-image: url('img/<?php echo $foto_header; ?>') !important;
-            <?php endif; ?>
+        .track-row {
+            transition: background-color 0.25s ease, transform 0.25s ease;
+            cursor: default;
+        }
+        .track-row:hover {
+            background-color: #282828 !important;
+            transform: translateY(-2px);
         }
     </style>
 </head>
-<body style="background-color: #121212; color: white; margin: 0; font-family: sans-serif;">
+<body style="background-color: #121212; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
 
     <?php include 'menu.php'; ?>
 
-    <div id="main" style="margin-left: 240px; padding-bottom: 90px;">
-        <div id="header" style="padding: 150px 32px 60px 32px; background-repeat: no-repeat; background-size: cover; background-position: center; position: relative;">
-            <p style="font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">ARTISTA VERIFICATO</p>
-            <h1 style="font-size: 72px; margin: 10px 0; font-weight: 900; text-shadow: 0 2px 10px rgba(0,0,0,0.5);"><?php echo htmlspecialchars($artista['nome']); ?></h1>
-            <p class="ascoltatori-mensili" style="font-size: 16px; font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">5,1 Mln ascoltatori mensili</p>
-        </div>
-
-        <?php echo $messaggio; ?>
-
-        <div id="Popolari" style="padding: 30px 32px;">
-            <h2 style="font-size: 24px; margin-bottom: 20px;">Album</h2>
-            <ol style="padding-left: 20px; color: #b3b3b3;">
-                <?php if ($risultato_album && $risultato_album->num_rows > 0): ?>
-                    <?php while($album = $risultato_album->fetch_assoc()): ?>
-                        <li style="margin-bottom: 15px; position: relative; list-style-position: inside;">
-                            <?php 
-                            $copertina = !empty($album['copertina']) ? str_replace('img/', '', $album['copertina']) : 'album.png';
-                            ?>
-                            <img src="img/<?php echo $copertina; ?>" alt="Album" style="width:40px; height:40px; object-fit:cover; border-radius:4px; vertical-align: middle; margin-right: 15px;" />
-                            <span class="nome-brano" style="color: white; font-size: 14px; font-weight: 500; vertical-align: middle; margin-right: 20px;"><?php echo htmlspecialchars($album['titolo']); ?> (<?php echo $album['anno']; ?>)</span>
-                            
-                            <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] === true): ?>
-                                <form action="artista.php?id=<?php echo $artista_id; ?>" method="POST" style="display: inline; vertical-align: middle;" onsubmit="return confirm('Vuoi eliminare definitivamente questo album da questo artista?');">
-                                    <input type="hidden" name="id_album_rimuovi" value="<?php echo $album['id']; ?>" />
-                                    <input type="hidden" name="artista_id" value="<?php echo $artista_id; ?>" />
-                                    <button type="submit" name="rimuovi_album" style="background-color: #e11d48; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-weight: bold; font-size: 11px; cursor: pointer;" title="Elimina Album">
-                                        Elimina
-                                    </button>
-                                </form>
-                            <?php endif; ?>
-                        </li>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <li style="list-style-type: none; color: #b3b3b3;">Nessun album o brano caricato per questo artista.</li>
-                <?php endif; ?>
-            </ol>
-        </div>
+    <div style="margin-left: 230px; max-width: 1200px;">
         
-        <div class="content" style="padding: 10px 32px 30px 32px;">
-            <h3 style="font-size: 20px; margin-bottom: 10px;">Biografia</h3>
-            <p style="color: #b3b3b3; max-width: 800px; line-height: 1.6;"><?php echo nl2br(htmlspecialchars($artista['biografia'])); ?></p>     
+        <!-- Hero Header Artista -->
+        <div style="background: linear-gradient(180deg, #404040 0%, #181818 100%); padding: 48px 32px 32px 32px; display: flex; align-items: flex-end; gap: 32px;">
+            <img src="img/<?php echo htmlspecialchars($artista['immagine']); ?>" alt="<?php echo htmlspecialchars($artista['nome']); ?>" style="width: 180px; height: 180px; border-radius: 50%; object-fit: cover; box-shadow: 0 8px 32px rgba(0,0,0,0.6);" />
+            <div>
+                <span style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #1db954; letter-spacing: 1px;">Artista Verificato</span>
+                <h1 style="font-size: 56px; font-weight: 900; margin: 8px 0; letter-spacing: -2px;"><?php echo htmlspecialchars($artista['nome']); ?></h1>
+                <p style="color: #b3b3b3; font-size: 14px; margin: 0; max-width: 700px; line-height: 1.5;"><?php echo htmlspecialchars($artista['biografia']); ?></p>
+            </div>
         </div>
 
-        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] === true): ?>
-            <div class="content" style="margin: 0 32px 40px 32px; padding: 25px; border: 1px solid #1db954; background-color: #181818; border-radius: 8px; max-width: 600px;">
-                <h3 style="color: #1db954; margin-top: 0; font-size: 18px; margin-bottom: 20px;">Pannello Admin: Aggiungi Album per questo artista</h3>
-                <form action="artista.php?id=<?php echo $artista_id; ?>" method="POST">
-                    <input type="hidden" name="artista_id" value="<?php echo $artista_id; ?>" />
-                    
-                    <div style="margin-bottom: 15px;">
-                        <label style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Titolo Album/Traccia:</label>
-                        <input type="text" name="titolo_album" required="required" placeholder="Es. Santana Season" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
+        <!-- Controlli -->
+        <div style="padding: 24px 32px; display: flex; align-items: center; gap: 24px;">
+            <div style="width: 56px; height: 56px; background-color: #1db954; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(0,0,0,0.4); cursor: pointer;">
+                <span style="color: #000000; font-size: 24px; margin-left: 4px;">▶</span>
+            </div>
+            <a href="artisti.php" style="background-color: transparent; border: 1px solid #727272; color: #ffffff; padding: 8px 24px; border-radius: 500px; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Torna agli Artisti</a>
+        </div>
+
+        <!-- Pannello Aggiunta Brano (Visibile solo ad Admin) -->
+        <?php if ($is_admin): ?>
+            <div style="margin: 0 32px 24px 32px; background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 20px;">
+                <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 14px 0; color: #1db954;">+ Aggiungi Brano a <?php echo htmlspecialchars($artista['nome']); ?> (Admin)</h3>
+                <form action="artista.php?id=<?php echo $id_artista; ?>" method="post" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Titolo Brano:</label>
+                        <input type="text" name="titolo" required style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px;" />
                     </div>
-                    
-                    <div style="margin-bottom: 15px;">
-                        <label style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Anno di Uscita:</label>
-                        <input type="number" name="anno_album" value="2026" required="required" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Durata (es: 3:30):</label>
+                        <input type="text" name="durata" value="3:15" style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px; width: 80px;" />
                     </div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <label style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">File Copertina (es. geolier.jpg):</label>
-                        <input type="text" name="copertina_album" placeholder="Es. madreperla.png" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Immagine (es: album.png):</label>
+                        <input type="text" name="immagine_brano" value="<?php echo htmlspecialchars($artista['immagine']); ?>" style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px;" />
                     </div>
-                    
-                    <button type="submit" name="aggiungi_album" style="background-color: #1db954; color: black; border: none; padding: 12px 24px; border-radius: 25px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px;">
-                        Salva nel Database
-                    </button>
+                    <div>
+                        <input type="submit" name="aggiungi_brano" value="Salva Brano" style="background-color: #1db954; color: #000000; border: none; padding: 9px 20px; border-radius: 500px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase;" />
+                    </div>
                 </form>
             </div>
         <?php endif; ?>
+
+        <!-- Sezione Brani -->
+        <div style="padding: 0 32px 48px 32px;">
+            <h2 style="font-size: 24px; font-weight: bold; margin: 0 0 20px 0;">Brani più popolari</h2>
+
+            <div style="background-color: #181818; border-radius: 8px; padding: 16px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #282828; color: #b3b3b3; font-size: 12px; text-transform: uppercase;">
+                            <th style="padding: 12px 16px; width: 40px;">#</th>
+                            <th style="padding: 12px 16px;">Titolo e Copertina</th>
+                            <th style="padding: 12px 16px;">Album</th>
+                            <th style="padding: 12px 16px; text-align: right; width: 80px;">Durata</th>
+                            <?php if ($is_admin): ?>
+                                <th style="padding: 12px 16px; text-align: right; width: 80px;">Azione</th>
+                            <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $num = 1;
+                        while ($tr = $res_brani->fetch_assoc()): 
+                        ?>
+                            <tr class="track-row" style="border-bottom: 1px solid #222222; font-size: 14px;">
+                                <td style="padding: 14px 16px; color: #b3b3b3; font-weight: bold;"><?php echo $num++; ?></td>
+                                <td style="padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+                                    <img src="img/<?php echo htmlspecialchars($tr['immagine_brano']); ?>" alt="Cover" style="width: 44px; height: 44px; border-radius: 4px; object-fit: cover;" />
+                                    <span style="font-weight: bold; color: #ffffff;"><?php echo htmlspecialchars($tr['titolo']); ?></span>
+                                </td>
+                                <td style="padding: 14px 16px; color: #b3b3b3;"><?php echo htmlspecialchars($tr['album_nome']); ?></td>
+                                <td style="padding: 14px 16px; text-align: right; color: #b3b3b3;"><?php echo htmlspecialchars($tr['durata']); ?></td>
+                                <?php if ($is_admin): ?>
+                                    <td style="padding: 14px 16px; text-align: right;">
+                                        <a href="artista.php?id=<?php echo $id_artista; ?>&del_brano=<?php echo $tr['track_id']; ?>" onclick="return confirm('Eliminare questo brano?');" style="color: #e22134; font-size: 11px; font-weight: bold; text-decoration: none;">Elimina</a>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
 </body>
 </html>
-<?php $conn->close(); ?>
+<?php 
+$stmt_b->close();
+$conn->close(); 
+?>

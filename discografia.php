@@ -1,173 +1,190 @@
 <?php
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 require_once 'connection.php';
 
-$messaggio = "";
+$is_admin = (isset($_SESSION['ruolo']) && $_SESSION['ruolo'] === 'admin');
+$cerca = isset($_GET['cerca']) ? trim($_GET['cerca']) : '';
 
-// 1. GESTIONE RIMOZIONE ALBUM (Solo se Admin)
-if (isset($_SESSION['admin']) && $_SESSION['admin'] === true && $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['rimuovi_album'])) {
-    $id_da_rimuovere = intval($_POST['id_album_rimuovi']);
-    
-    $sql_delete = "DELETE FROM album WHERE id = $id_da_rimuovere";
-    if ($conn->query($sql_delete) === TRUE) {
-        $messaggio = "<div style='background-color: #e11d48; color: white; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;'>🔴 Album rimosso con successo dal database!</div>";
+// Gestione eliminazione album (lato admin)
+if ($is_admin && isset($_GET['del_album'])) {
+    $id_del = (int)$_GET['del_album'];
+    $stmt_del = $conn->prepare("DELETE FROM `" . TAB_ALBUMS . "` WHERE id = ?");
+    $stmt_del->bind_param('i', $id_del);
+    $stmt_del->execute();
+    $stmt_del->close();
+    header('Location: discografia.php');
+    exit();
+}
+
+// Gestione inserimento nuovo album (lato admin)
+$msg_err = '';
+if ($is_admin && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aggiungi_album'])) {
+    $artista_id = (int)$_POST['artista_id'];
+    $titolo = trim($_POST['titolo']);
+    $anno = (int)$_POST['anno'];
+    $copertina = trim($_POST['copertina']);
+
+    if (!empty($titolo) && $artista_id > 0 && $anno > 0) {
+        if (empty($copertina)) { $copertina = 'album.png'; }
+        $stmt_ins = $conn->prepare("INSERT INTO `" . TAB_ALBUMS . "` (artista_id, titolo, anno, copertina) VALUES (?, ?, ?, ?)");
+        $stmt_ins->bind_param('isis', $artista_id, $titolo, $anno, $copertina);
+        $stmt_ins->execute();
+        $stmt_ins->close();
+        header('Location: discografia.php');
+        exit();
     } else {
-        $messaggio = "<div style='background-color: #e11d48; color: white; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;'>❌ Errore durante la rimozione: " . $conn->error . "</div>";
+        $msg_err = "Compila tutti i campi obbligatori per aggiungere l'album.";
     }
 }
 
-// 2. GESTIONE INSERIMENTO NUOVO ALBUM (Solo se Admin)
-if (isset($_SESSION['admin']) && $_SESSION['admin'] === true && $_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['aggiungi_album'])) {
-    $titolo = $conn->real_escape_string(trim($_POST['titolo_album']));
-    $anno = intval($_POST['anno_album']);
-    $artista_id = intval($_POST['artista_id']);
-    $copertina = $conn->real_escape_string(trim($_POST['copertina_album']));
-
-    if (empty($copertina)) {
-        $copertina = "album.png";
-    }
-
-    if (!empty($titolo) && $artista_id > 0) {
-        $sql_insert = "INSERT INTO album (artista_id, titolo, anno, copertina) VALUES ($artista_id, '$titolo', $anno, '$copertina')";
-        if ($conn->query($sql_insert) === TRUE) {
-            $messaggio = "<div style='background-color: #1db954; color: black; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;'>🟢 Album aggiunto con successo!</div>";
-        } else {
-            $messaggio = "<div style='background-color: #e11d48; color: white; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;'>❌ Errore durante l'inserimento: " . $conn->error . "</div>";
-        }
-    }
+// Query di visualizzazione album
+if (!empty($cerca)) {
+    $stmt = $conn->prepare("SELECT alb.id AS album_id, alb.titolo AS album, alb.anno, alb.copertina, art.id AS artista_id, art.nome AS artista,
+                            (SELECT COUNT(*) FROM `" . TAB_TRACKS . "` WHERE album_id = alb.id) AS tot_tracce
+                            FROM `" . TAB_ALBUMS . "` alb 
+                            JOIN `" . TAB_ARTISTS . "` art ON alb.artista_id = art.id 
+                            WHERE alb.titolo LIKE ? OR art.nome LIKE ?
+                            ORDER BY alb.anno DESC");
+    $param = '%' . $cerca . '%';
+    $stmt->bind_param('ss', $param, $param);
+    $stmt->execute();
+    $res_albums = $stmt->get_result();
+} else {
+    $sql = "SELECT alb.id AS album_id, alb.titolo AS album, alb.anno, alb.copertina, art.id AS artista_id, art.nome AS artista,
+            (SELECT COUNT(*) FROM `" . TAB_TRACKS . "` WHERE album_id = alb.id) AS tot_tracce
+            FROM `" . TAB_ALBUMS . "` alb 
+            JOIN `" . TAB_ARTISTS . "` art ON alb.artista_id = art.id 
+            ORDER BY alb.anno DESC";
+    $res_albums = $conn->query($sql);
 }
 
-// 3. Recuperiamo tutti gli album uniti agli artisti per mostrare i dettagli completi
-$query = "SELECT album.*, artisti.nome AS artista_nome FROM album JOIN artisti ON album.artista_id = artisti.id ORDER BY album.anno DESC";
-$risultato = $conn->query($query);
-
-// Recuperiamo la lista degli artisti per il menu a tendina del pannello inserimento
-$query_artisti = "SELECT id, nome FROM artisti ORDER BY nome ASC";
-$risultato_artisti = $conn->query($query_artisti);
-
-echo '<?xml version="1.0" encoding="UTF-8"?>';
+$res_art_list = $conn->query("SELECT id, nome FROM `" . TAB_ARTISTS . "` ORDER BY nome ASC");
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Discografia - Spotify Style</title>
-    <link rel="stylesheet" type="text/css" href="_homepage.css" />
-    
+    <title>Discografia Completa - Spotify</title>
     <style type="text/css">
-        /* 🟢 FORZA IL LINK "DISCOGRAFIA" DELLA SIDEBAR A DIVENTARE VERDE 🟢 */
-        #menu-discografia,
-        .sidebar a[href="discografia.php"],
-        #sidebar a[href="discografia.php"],
-        #nav a[href="discografia.php"],
-        ul li a[href="discografia.php"] {
-            color: #1db954 !important;
-            font-weight: bold !important;
+        .spotify-album-card {
+            transition: transform 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+            cursor: default;
         }
-
-        .album-card, .card {
-            transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease !important;
-            cursor: default !important; /* Mantiene la freccia standard, nessuna manina */
-            user-select: none;          /* Evita la selezione accidentale del testo */
+        .spotify-album-card:hover {
+            transform: translateY(-6px);
+            background-color: #282828 !important;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.7);
         }
-        
-        /* Mantiene l'effetto rilievo estetico senza l'interazione del link */
-        .album-card:hover, .card:hover {
-            background-color: #282828 !important; 
-            transform: translateY(-8px);          
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7) !important; 
+        .artist-tag-link {
+            color: #b3b3b3;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .artist-tag-link:hover {
+            color: #1db954;
+            text-decoration: underline;
         }
     </style>
 </head>
-<body style="background-color: #121212; color: white; margin: 0; font-family: sans-serif;">
+<body style="background-color: #121212; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
 
     <?php include 'menu.php'; ?>
 
-    <div id="main" style="padding: 20px; padding-bottom: 60px;">
+    <div style="margin-left: 230px; padding: 32px; max-width: 1200px;">
         
-        <div style="margin-bottom: 30px;">
-            <h1 style="color: white; font-size: 28px; font-weight: bold;">Album ed EP</h1>
-            <p style="color: #b3b3b3; font-size: 14px;">Esplora le ultime uscite dei tuoi artisti preferiti.</p>
+        <!-- Intestazione & Azioni Admin -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <h1 style="font-size: 32px; font-weight: 900; margin: 0 0 8px 0; letter-spacing: -1px;">Discografia Completa</h1>
+                <p style="color: #b3b3b3; font-size: 14px; margin: 0;">Esplora tutte le uscite ufficiali e gli album memorizzati nel database.</p>
+            </div>
+
+            <!-- Form di Ricerca -->
+            <form action="discografia.php" method="get" style="display: flex; gap: 8px;">
+                <input type="text" name="cerca" value="<?php echo htmlspecialchars($cerca); ?>" placeholder="Cerca album o artista..." style="padding: 10px 16px; border-radius: 500px; background-color: #242424; border: 1px solid #3e3e3e; color: #ffffff; font-size: 13px; outline: none; width: 200px;" />
+                <input type="submit" value="Cerca" style="background-color: #1db954; color: #000000; border: none; padding: 10px 18px; border-radius: 500px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase;" />
+                <?php if (!empty($cerca)): ?>
+                    <a href="discografia.php" style="background-color: #333333; color: #ffffff; padding: 10px 14px; border-radius: 500px; text-decoration: none; font-size: 12px; font-weight: bold; display: flex; align-items: center;">Azzera</a>
+                <?php endif; ?>
+            </form>
         </div>
 
-        <?php echo $messaggio; ?>
-
-        <div class="album-grid" style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 5px;">
-            <?php if ($risultato && $risultato->num_rows > 0): ?>
-                <?php while ($row = $risultato->fetch_assoc()): ?>
-                    
-                    <div class="album-card" style="background-color: #181818; padding: 16px; border-radius: 8px; width: 180px; text-align: left; box-sizing: border-box; position: relative;">
-                        
-                        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] === true): ?>
-                            <form action="discografia.php" method="POST" style="position: absolute; top: 8px; right: 8px; z-index: 10;" onsubmit="return confirm('Sei sicuro di voler eliminare definitivamente questo album?');">
-                                <input type="hidden" name="id_album_rimuovi" value="<?php echo $row['id']; ?>" />
-                                <button type="submit" name="rimuovi_album" style="background-color: #e11d48; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; align-items: center; justify-content: center;" title="Elimina Album">
-                                    X
-                                </button>
-                            </form>
-                        <?php endif; ?>
-
-                        <?php 
-                        $copertina_album = !empty($row['copertina']) ? trim($row['copertina']) : 'album.png';
-                        $copertina_album = str_replace('img/', '', $copertina_album);
-                        ?>
-                        
-                        <img src="img/<?php echo $copertina_album; ?>" alt="<?php echo htmlspecialchars($row['titolo']); ?>" style="width: 148px; height: 148px; object-fit: cover; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.5); margin-bottom: 16px; display: block;" />
-                        
-                        <h3 style="color: white; font-size: 14px; margin: 0 0 4px 0; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($row['titolo']); ?></h3>
-                        <p style="color: #b3b3b3; font-size: 12px; margin: 0 0 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($row['artista_nome']); ?></p>
-                        <p style="color: #6a6a6a; font-size: 11px; margin: 0; font-weight: bold;"><?php echo $row['anno']; ?></p>
-                    </div>
-
-                <?php endwhile; ?>
-            <?php else: ?>
-                <p style="color: #b3b3b3; padding: 20px;">Nessun album presente nel database.</p>
-            <?php endif; ?>
-        </div>
-
-        <?php if (isset($_SESSION['admin']) && $_SESSION['admin'] === true): ?>
-            <div style="margin-top: 50px; padding: 25px; border: 1px solid #1db954; background-color: #181818; border-radius: 8px; max-width: 600px; box-sizing: border-box;">
-                <h3 style="color: #1db954; margin-top: 0; font-size: 18px; margin-bottom: 20px;">Pannello Admin: Aggiungi Nuovo Album</h3>
-                
-                <form action="discografia.php" method="POST">
-                    <div style="margin-bottom: 15px;">
-                        <label for="titolo_album" style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Titolo Album:</label>
-                        <input type="text" id="titolo_album" name="titolo_album" required="required" placeholder="Es. Madreperla" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label for="artista_id" style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Associa ad Artista:</label>
-                        <select id="artista_id" name="artista_id" required="required" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;">
-                            <option value="">-- Seleziona l'artista --</option>
-                            <?php if ($risultato_artisti && $risultato_artisti->num_rows > 0): ?>
-                                <?php while ($art = $risultato_artisti->fetch_assoc()): ?>
-                                    <option value="<?php echo $art['id']; ?>"><?php echo htmlspecialchars($art['nome']); ?></option>
-                                <?php endwhile; ?>
-                            <?php endif; ?>
+        <!-- Pannello Aggiunta Album (Visibile solo ad Admin) -->
+        <?php if ($is_admin): ?>
+            <div style="background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
+                <h3 style="font-size: 16px; font-weight: bold; margin: 0 0 14px 0; color: #1db954;">+ Aggiungi Nuovo Album (Admin)</h3>
+                <?php if (!empty($msg_err)): ?>
+                    <p style="color: #e22134; font-size: 13px; margin-bottom: 10px;"><?php echo $msg_err; ?></p>
+                <?php endif; ?>
+                <form action="discografia.php" method="post" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Artista:</label>
+                        <select name="artista_id" style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px;">
+                            <?php while ($ar = $res_art_list->fetch_assoc()): ?>
+                                <option value="<?php echo $ar['id']; ?>"><?php echo htmlspecialchars($ar['nome']); ?></option>
+                            <?php endwhile; ?>
                         </select>
                     </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label for="anno_album" style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Anno di Pubblicazione:</label>
-                        <input type="number" id="anno_album" name="anno_album" required="required" min="1900" max="2030" placeholder="Es. 2023" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Titolo Album:</label>
+                        <input type="text" name="titolo" required style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px;" />
                     </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label for="copertina_album" style="color: #b3b3b3; font-size: 14px; display: block; margin-bottom: 5px;">Nome File Copertina (es. brivido.png o lazza.jpg):</label>
-                        <input type="text" id="copertina_album" name="copertina_album" placeholder="Es. copertina.png" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #3e3e3e; color: white; border-radius: 4px; box-sizing: border-box;" />
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Anno:</label>
+                        <input type="number" name="anno" value="2026" required style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px; width: 80px;" />
                     </div>
-
-                    <button type="submit" name="aggiungi_album" style="background-color: #1db954; color: black; border: none; padding: 12px 24px; border-radius: 25px; font-weight: bold; cursor: default; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
-                        Inserisci Album nel DB
-                    </button>
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 4px;">Nome file immagine (es: album.png):</label>
+                        <input type="text" name="copertina" value="album.png" style="padding: 8px 12px; background-color: #242424; color: #ffffff; border: 1px solid #3e3e3e; border-radius: 4px; font-size: 13px;" />
+                    </div>
+                    <div>
+                        <input type="submit" name="aggiungi_album" value="Salva Album" style="background-color: #1db954; color: #000000; border: none; padding: 9px 20px; border-radius: 500px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase;" />
+                    </div>
                 </form>
             </div>
         <?php endif; ?>
+
+        <!-- Griglia Album -->
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <?php if ($res_albums && $res_albums->num_rows > 0): ?>
+                <?php while ($alb = $res_albums->fetch_assoc()): ?>
+                    <div class="spotify-album-card" style="background-color: #181818; padding: 16px; border-radius: 8px; width: 180px; box-sizing: border-box; display: flex; flex-direction: column; position: relative;">
+                        <img src="img/<?php echo htmlspecialchars($alb['copertina']); ?>" alt="<?php echo htmlspecialchars($alb['album']); ?>" style="width: 148px; height: 148px; border-radius: 6px; object-fit: cover; margin-bottom: 14px; box-shadow: 0 6px 16px rgba(0,0,0,0.5);" />
+                        
+                        <p style="font-size: 15px; font-weight: bold; margin: 0 0 6px 0; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <?php echo htmlspecialchars($alb['album']); ?>
+                        </p>
+                        
+                        <p style="font-size: 13px; margin: 0 0 6px 0;">
+                            <a href="artista.php?id=<?php echo $alb['artista_id']; ?>" class="artist-tag-link">
+                                <?php echo htmlspecialchars($alb['artista']); ?>
+                            </a>
+                        </p>
+                        
+                        <p style="color: #727272; font-size: 12px; margin: auto 0 0 0; font-weight: 500;">
+                            <?php echo htmlspecialchars($alb['anno']); ?> • <?php echo $alb['tot_tracce']; ?> brani
+                        </p>
+
+                        <!-- Tasto Elimina Album (Visibile solo ad Admin) -->
+                        <?php if ($is_admin): ?>
+                            <div style="margin-top: 10px; border-top: 1px solid #282828; padding-top: 8px; text-align: right;">
+                                <a href="discografia.php?del_album=<?php echo $alb['album_id']; ?>" onclick="return confirm('Vuoi davvero eliminare questo album?');" style="color: #e22134; font-size: 11px; font-weight: bold; text-decoration: none;">Elimina</a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <div style="background-color: #181818; padding: 24px; border-radius: 8px; width: 100%;">
+                    <p style="color: #b3b3b3; margin: 0;">Nessun album trovato.</p>
+                </div>
+            <?php endif; ?>
+        </div>
 
     </div>
 
 </body>
 </html>
-<?php $conn->close(); ?>
+<?php 
+if (isset($stmt)) { $stmt->close(); }
+$conn->close(); 
+?>
