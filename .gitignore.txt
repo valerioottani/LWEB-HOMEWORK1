@@ -1,0 +1,17 @@
+# File di sistema Windows
+Thumbs.db
+desktop.ini
+
+# File temporanei di XAMPP / Apache
+*.log
+*.tmp
+/xampp/
+
+# File di configurazione degli editor (se usi VS Code)
+.vscode/
+*.code-workspace
+
+# Eventuali backup o file scaricati
+*.zip
+*.rar
+*.bak
